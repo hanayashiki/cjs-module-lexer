@@ -1,8 +1,27 @@
 # CJS Module Lexer (Rust)
 
-*Warning: 👷👷‍♀️ This library is under-construction. PR welcome! *
-
 This is a rewrite of [cjs-module-lexer](https://github.com/nodejs/cjs-module-lexer) in Rust. It is a CommonJS lexer used to detect the most likely list of named exports of a CommonJS module.
+
+## Installation
+
+### WebAssembly JS Wrapper
+
+```
+npm i cjs-module-lexer-rs
+```
+
+```
+yarn add cjs-module-lexer-rs
+```
+
+```
+pnpm add cjs-module-lexer-rs
+```
+
+### Rust
+
+**Coming soon...**
+
 
 ## The Why
 The frontend tooling has migrated to usage of moderm native languages to accelerate development and improve developer experience.  `cjs-module-lexer` remains useful in many scenes, but it assumes the code is UTF16 and only allows single-thread. Making `cjs-module-lexer` working with Rust requires FFI and unsafe code. Hopefully this Rust library will be useful for Rust tooling authors to interop between CJS and ESM.
@@ -34,12 +53,12 @@ https://babeljs.io/docs/en/babel-plugin-transform-modules-commonjs
 ```
 cargo bench
 
-test tests::bench_angular          ... bench:   6,081,228 ns/iter (+/- 2,231,541)
-test tests::bench_angular_min      ... bench:   2,233,770 ns/iter (+/- 275,218)
-test tests::bench_d3               ... bench:   3,018,748 ns/iter (+/- 148,829)
-test tests::bench_d3_min           ... bench:   1,765,260 ns/iter (+/- 116,394)
-test tests::bench_magic_string     ... bench:     206,413 ns/iter (+/- 16,731)
-test tests::bench_magic_string_min ... bench:     142,617 ns/iter (+/- 8,605)
-test tests::bench_rollup           ... bench:   3,865,267 ns/iter (+/- 234,927)
-test tests::bench_rollup_min       ... bench:   2,608,537 ns/iter (+/- 135,582)
+test tests::bench_angular          ... bench:   5,176,437 ns/iter (+/- 260,598)
+test tests::bench_angular_min      ... bench:   2,321,468 ns/iter (+/- 939,693)
+test tests::bench_d3               ... bench:   3,155,154 ns/iter (+/- 182,490)
+test tests::bench_d3_min           ... bench:   1,897,146 ns/iter (+/- 100,576)
+test tests::bench_magic_string     ... bench:     209,630 ns/iter (+/- 11,577)
+test tests::bench_magic_string_min ... bench:     145,834 ns/iter (+/- 7,527)
+test tests::bench_rollup           ... bench:   3,918,989 ns/iter (+/- 130,726)
+test tests::bench_rollup_min       ... bench:   2,637,478 ns/iter (+/- 74,449)
 ```

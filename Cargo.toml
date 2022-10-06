@@ -1,9 +1,5 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[profile.release]
-debug = true
-lto = true
-
 [workspace]
 members = [
     "cjs_module_lexer",

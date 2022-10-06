@@ -1,7 +1,7 @@
 {
   "name": "cjs-module-lexer-rs",
   "license": "MIT",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "exports": {
