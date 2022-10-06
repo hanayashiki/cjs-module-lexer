@@ -18,8 +18,8 @@ The frontend tooling has migrated to usage of moderm native languages to acceler
 | `Object.defineProperty(exports, 'q', { enumerable: true, get() { return q } })` | 👷  | |  TypeScript: `export {colorFactory} from './color-factory';`
 | `__export`, `__exportStar` | 👷 | | TypeScript: `export * from 'external'` |
 | Skip [StringLiteral](https://tc39.es/ecma262/#prod-StringLiteral) | 👌   | 0.1.0  |
-| Skip [RegularExpressionLiteral](https://tc39.es/ecma262/#sec-literals-regular-expression-literals) | 👷 |
-| Skip [Template](https://tc39.es/ecma262/#prod-Template) | 👷 |
+| Skip [RegularExpressionLiteral](https://tc39.es/ecma262/#sec-literals-regular-expression-literals) | 👌 | 0.1.0
+| Skip [Template](https://tc39.es/ecma262/#prod-Template) | 👌 | 0.1.0
 | Non-unicode Named Export | ❌ |  | Not supported due to `std::str` only allows unicode strings
 
 ## Reference

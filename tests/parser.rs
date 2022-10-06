@@ -246,6 +246,29 @@ mod tests {
     }
 
     #[test]
+    fn test_rollup_slice1() {
+        let source = std::fs::read_to_string("tests/fixtures/rollup-slice1.js").unwrap();
+
+        let mut p = Parser::new(source.as_str(), "rollup.js");
+        p.parse();
+
+        println!("{:?}", p.parse_result);
+    }
+
+    #[test]
+    fn test_rollup_slice2() {
+        let source = std::fs::read_to_string("tests/fixtures/rollup-slice2.js").unwrap();
+
+        let slice = source.find("//FUCKKKK").unwrap();
+        let source = std::str::from_utf8(&source.as_bytes()[slice..]).unwrap();
+        println!("{}", source);
+        let mut p = Parser::new(source, "rollup.js");
+        p.parse();
+
+        println!("{:?}", p.parse_result);
+    }
+
+    #[test]
     fn test_rollup_min() {
         let source = std::fs::read_to_string("tests/fixtures/rollup.min.js").unwrap();
 
@@ -253,5 +276,33 @@ mod tests {
         p.parse();
 
         println!("{:?}", p.parse_result);
+    }
+
+    #[test]
+    fn test_regex() {
+        let source = r#"
+            var regex = /())/; // Show identify a regex instead of report bracket matching error
+
+            // parenthesis keywords
+            if (some) /())/.test(a)
+            while (some) /())/.test(a)
+            for (let i in [1, 2, 3]) /())/.test(a)
+
+            // expressions
+            !/())/
+            a + /())/
+            {
+                /())/
+            }
+            (/{}}}/)
+
+            // not a regex
+            a /b/1
+        "#;
+
+        let mut p = Parser::new(source, "@");
+        let r = p.parse();
+
+        assert_eq!(r.errors, vec![])
     }
 }

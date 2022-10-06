@@ -31,6 +31,8 @@ pub struct Parser<'a> {
     pub open_token_depth: usize,
     pub parse_result: ParseResult,
     bracket_stack: Vec<Bracket>,
+    parenthesis_type: ParenthesisType,
+    expect_expression: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -46,7 +48,9 @@ impl<'a> Parser<'a> {
                 reexports: vec![],
                 errors: vec![],
             },
-            bracket_stack: vec![],
+            bracket_stack: std::vec::Vec::with_capacity(8),
+            parenthesis_type: ParenthesisType::Plain,
+            expect_expression: true,
         }
     }
 
@@ -63,6 +67,8 @@ impl<'a> Parser<'a> {
     }
 
     fn next_offset(&mut self, offset: usize) {
+        // print!("stack = {} ", self.bracket_stack.len());
+        // self.print_current_line();
         self.pos += offset;
     }
 
@@ -71,7 +77,11 @@ impl<'a> Parser<'a> {
     }
 
     fn cur_neg_offset(&self, offset: usize) -> Option<u8> {
-        self.source.get(self.pos - offset).map(|c| *c)
+        if self.pos >= offset {
+            self.source.get(self.pos - offset).map(|c| *c)
+        } else {
+            None
+        }
     }
 
     fn full_char_code(&self) -> Option<char> {
@@ -138,6 +148,7 @@ impl<'a> Parser<'a> {
                     self.next_offset(ch.len_utf8());
                 } else {
                     // no identifier escapes support for now
+                    self.expect_expression = false;
                     return Some(result);
                 }
             }
@@ -294,12 +305,13 @@ impl<'a> Parser<'a> {
                                 '0',
                                 ParseErrorMessage {
                                     pos: self.pos,
-                                    message: format!("Sorry, \0 in string literal is not supported. Inputs like `exports['\\0'] = 1` are not extracted"),
+                                    message: format!("Sorry, \0 in string literal is not supported. Inputs like `exports['\\0'] = 1` will be returned with the escape sequence as-is. "),
                                 },
                             ));
                         self.next();
+
+                        return Some(vec![b'\\', b'\0']);
                     }
-                    None
                 }
                 Some(b'u') => {
                     return self.unicode_escape_sequence();
@@ -328,6 +340,7 @@ impl<'a> Parser<'a> {
                     match c {
                         c if c == quote => {
                             self.next();
+                            self.expect_expression = false;
                             return Some(String::from_utf8(result).unwrap());
                         }
                         b'\\' => {
@@ -363,7 +376,10 @@ impl<'a> Parser<'a> {
                     result.push(char::from(c));
                     self.next();
                 }
-                _ => return Some(result),
+                _ => {
+                    self.expect_expression = false;
+                    return Some(result);
+                }
             }
         }
         None
@@ -380,7 +396,6 @@ impl<'a> Parser<'a> {
         self.next();
 
         while let Some(_) = self.cur() {
-            self.print_current_line();
             self.comment_whitespace();
 
             if let Some(identifier) = self.identifer() {
@@ -408,6 +423,8 @@ impl<'a> Parser<'a> {
             if self.cur() == Some(b',') {
                 self.next();
             } else if self.cur() == Some(b'}') {
+                self.expect_expression = false;
+                self.next();
                 return;
             } else {
                 // TODO: report error
@@ -419,8 +436,10 @@ impl<'a> Parser<'a> {
     fn try_parse_exports_dot_assign(&mut self, assign: bool) {
         // lexer.c tryParseExportsDotAssign
 
-        self.next_offset(EXPORTS.len());
+        self.next_offset(EXPORTS.len()); // after `exports`
         let revert_pos = self.pos - 1;
+        // at `exports.`
+        //           ^
 
         self.comment_whitespace();
 
@@ -449,7 +468,6 @@ impl<'a> Parser<'a> {
                         self.comment_whitespace();
 
                         if let Some(b'=') = self.cur() {
-                            self.next();
                             self.parse_result.exports.push(key);
                             return;
                         }
@@ -516,6 +534,7 @@ impl<'a> Parser<'a> {
 
                 if let Some(b')') = self.cur() {
                     self.next();
+                    self.expect_expression = false;
                     return Some(required);
                 } else {
                     // TODO: add errors
@@ -528,7 +547,22 @@ impl<'a> Parser<'a> {
     }
 
     /// https://tc39.es/ecma262/#sec-literals-regular-expression-literals
+    /// # Note
+    /// It depends on the syntax context when we are encountered with a '/'.
+    /// The basic rule is, if we are going to parse an expression, we consider '/' as
+    /// start of a Regular Expression Literal. Otherwise, we consider it as a division punctuator.
+    ///
+    /// Even if it is a syntatic problem, we can identify '/' by the following rules, based on bracket analysis:
+    /// 1. The last token is a punctatutor. Like: call(firstParam, /regex/)
+    /// 2. The last token is a keyword that follows an expression (lexer.c isExpressionKeyword)
+    /// 3. We are at start of a block
+    ///     1. while (...)
+    ///     2. for (...)
+    ///     3. if (...)
+    ///
     fn regex_literal(&mut self) {
+        println!("Regex identified");
+        self.print_current_line();
         if let Some(b'/') = self.cur() {
             let start_pos = self.pos;
 
@@ -540,13 +574,18 @@ impl<'a> Parser<'a> {
                 self.next();
 
                 if is_br(c) {
-                    self.parse_result.errors.push(ParseError::UnterminatedRegExp(ParseErrorMessage {
-                        pos: start_pos,
-                        message: format!("The regular expression ends halfway with a line break."),
-                    }));
+                    self.parse_result
+                        .errors
+                        .push(ParseError::UnterminatedRegExp(ParseErrorMessage {
+                            pos: start_pos,
+                            message: format!(
+                                "The regular expression ends halfway with a line break."
+                            ),
+                        }));
+                    panic!("!!!");
                     return;
                 }
-                
+
                 if escaped {
                     escaped = false;
                 } else {
@@ -563,8 +602,50 @@ impl<'a> Parser<'a> {
 
             // optional RegularExpressionFlags
             self.identifer();
+
+            println!("Regex end");
+            self.print_current_line();
         } else {
-            return
+            return;
+        }
+    }
+
+    /// https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-template-literals
+    pub fn template_literal(&mut self, is_middle: bool) {
+        if !is_middle && !matches!(self.cur(), Some(b'`')) {
+            return;
+        }
+
+        // Something like:
+        // }`
+        // The template literal ends immediately after `}`.
+
+        if is_middle && matches!(self.cur(), Some(b'`')) {
+            self.next();
+            self.expect_expression = false;
+            return;
+        }
+
+        self.next();
+
+        while let Some(c) = self.cur() {
+            match c {
+                b'`' => {
+                    self.next();
+                    self.expect_expression = false;
+                    return;
+                }
+                b'\\' => {
+                    self.next_offset(2);
+                }
+                b'$' if self.cur_offset(1) == Some(b'{') => {
+                    self.next_offset(2);
+                    self.bracket_stack.push(Bracket::TemplateBrace);
+                    self.expect_expression = true;
+                    return;
+                }
+                _ => self.next(),
+            }
         }
     }
 
@@ -610,48 +691,98 @@ impl<'a> Parser<'a> {
                 b'r' if self.source[self.pos..].starts_with(REQUIRE) && self.keyword_start() => {
                     self.try_parse_require();
                 }
+                b'i' | b'w' | b'f' | b'c' | b'd' | b'e' | b'n' | b'r' | b't' | b'v' | b'y' | b'a' if self.keyword_start() => {
+                    let maybe_keyword = match_keyword(&self.source[self.pos..]); 
+
+                    if maybe_keyword.is_some() {
+                        if let MaybeKeyword::Expression(s) = maybe_keyword {
+                            self.next_offset(s);
+                            self.expect_expression = true;
+                        } 
+                        if let MaybeKeyword::Parenthesis(s) = maybe_keyword {
+                            self.next_offset(s);
+                            self.expect_expression = false;
+                        }
+                    } else {
+                        // Just like `_` case
+                        self.next();
+                        self.expect_expression = false;
+                    }
+                }
                 b'\'' | b'"' => {
                     self.string_literal();
                 }
+                b'`' => self.template_literal(false),
                 b'm' if self.source[self.pos..].starts_with(MODULE) && self.keyword_start() => {
                     self.try_parse_module_exports_dot_assign();
                 }
-                b'/' if matches!(self.cur_offset(1), Some(b'*' | b'/')) => {
-                    self.comment_whitespace();
+                b'/' => {
+                    if matches!(self.cur_offset(1), Some(b'*' | b'/')) {
+                        self.comment_whitespace();
+                    } else if self.expect_expression {
+                        self.regex_literal();
+                    } else {
+                        // Division
+                        self.next();
+                        self.expect_expression = true;
+                    }
                 }
                 c @ (b'(' | b'[' | b'{') => {
-                    self.print_current_line();
                     match c {
-                       b'(' => self.bracket_stack.push(Bracket::Parenthesis),
-                       b'[' => self.bracket_stack.push(Bracket::Bracket),
-                       b'{' => self.bracket_stack.push(Bracket::Brace),
-                       _ => unreachable!(),
+                        b'(' => {
+                            self.bracket_stack
+                                .push(Bracket::Parenthesis(self.parenthesis_type.clone()));
+
+                            if matches!(self.parenthesis_type, ParenthesisType::ParenthesisKeyword)
+                            {
+                                self.parenthesis_type = ParenthesisType::Plain;
+                            }
+                        }
+                        b'[' => self.bracket_stack.push(Bracket::Bracket),
+                        b'{' => self.bracket_stack.push(Bracket::Brace),
+                        _ => unreachable!(),
                     }
-                    println!("bracket_stack.len() {}", self.bracket_stack.len());
+                    self.expect_expression = true;
                     self.next();
                 }
                 b')' | b']' | b'}' => {
-                    self.print_current_line();
-                    self.pop_bracket_stack();
+                    // println!("pop_bracket_stack");
+                    let bracket = self.pop_bracket_stack();
+
+                    if let Some(Bracket::TemplateBrace) = bracket {
+                        self.template_literal(true);
+                    }
+                }
+                c if is_punctuator(c) => {
+                    if c != b'.' {
+                        self.expect_expression = true;
+                    }
+                    self.next();
                 }
                 _ => {
+                    self.expect_expression = false;
+
                     self.next();
                 }
             }
-
-            
         }
 
         self.parse_result.clone()
     }
 
     pub fn print_current_line(&self) {
-        let slice = std::str::from_utf8(&self.source[self.pos..]).unwrap();
+        let slice = std::str::from_utf8(&self.source[self.pos..])
+            .unwrap_or("print_current_line: It's not utf-8, but this could happen if we read the bytes one by one. ");
 
+        let len = std::cmp::min(slice.find('\n').unwrap_or(slice.len()), 100);
+
+        // std::thread::sleep_ms(1);
         println!(
             "{}",
-            std::str::from_utf8(&slice.as_bytes()[0..slice.find('\n').unwrap_or(slice.len())])
-                .unwrap()
+            std::str::from_utf8(&slice.as_bytes()[0..len])
+                .unwrap_or(
+                    "print_current_line: It's not utf-8, but this could happen if we read the bytes one by one. "
+                )
         );
     }
 
@@ -662,11 +793,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn pop_bracket_stack(&mut self) -> bool {
+    fn pop_bracket_stack(&mut self) -> Option<Bracket> {
         if let Some(ch) = self.cur() {
             self.next();
             if let Some(old) = self.bracket_stack.pop() {
-                if ch != get_bracket_close_code(old) {
+                if ch != get_bracket_close_code(&old) {
                     println!("IncorrectClosingBracket");
                     self.parse_result
                         .errors
@@ -679,27 +810,35 @@ impl<'a> Parser<'a> {
                                 ),
                             },
                         ));
-                    panic!("...");
-                    return false;
+                    return None;
                 }
-  
-                return true;
+
+                // The bracket matches!
+
+                if matches!(
+                    old,
+                    Bracket::Parenthesis(ParenthesisType::ParenthesisKeyword)
+                ) {
+                    // End of place like: if (...)
+                    // println!("ParenthesisKeyword close");
+                    self.expect_expression = true;
+                } else {
+                    // End of place like: (a + b), { a: 1 }, [1, 2, 3]
+                    self.expect_expression = false;
+                }
+
+                return Some(old);
             } else {
                 println!("UnexpectedBracket");
-                self.parse_result
-                    .errors
-                    .push(ParseError::UnexpectedBracket(
-                        char::from(ch),
-                        ParseErrorMessage {
-                            pos: self.pos,
-                            message: format!(
-                                "Expect to match a opening bracket, but found nothing. "
-                            ),
-                        },
-                    ));
+                self.parse_result.errors.push(ParseError::UnexpectedBracket(
+                    char::from(ch),
+                    ParseErrorMessage {
+                        pos: self.pos,
+                        message: format!("Expect to match a opening bracket, but found nothing. "),
+                    },
+                ));
                 self.next();
-                panic!("...");
-                return false;
+                return None;
             }
         } else {
             self.parse_result
@@ -708,7 +847,7 @@ impl<'a> Parser<'a> {
                     pos: self.pos,
                     message: format!("Expect to find a bracket here, but encountered EOF"),
                 }));
-            return false;
+            return None;
         }
     }
 }

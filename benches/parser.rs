@@ -18,7 +18,7 @@ mod tests {
         b.iter(|| {
             let mut p = Parser::new(source.as_str(), path);
             p.parse();
-
+            println!("{} {:?}", path, p.parse_result.errors);
             assert_eq!(
                 p.parse_result
                     .errors
