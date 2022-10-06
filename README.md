@@ -2,6 +2,10 @@
 
 This is a rewrite of [cjs-module-lexer](https://github.com/nodejs/cjs-module-lexer) in Rust. It is a CommonJS lexer used to detect the most likely list of named exports of a CommonJS module.
 
+## Online Playground
+
+[CJS Module Lexer Playground](https://cjs-module-lexer-playground.vercel.app?code=bW9kdWxlLmV4cG9ydHMuYXNkZiA9ICdhc2RmJzsKZXhwb3J0cyA9ICdhc2RmJzsKbW9kdWxlLmV4cG9ydHMgPSByZXF1aXJlKCcuL2FzZGYnKTsKaWYgKG1heWJlKQogIG1vZHVsZS5leHBvcnRzID0gcmVxdWlyZSgiLi9hbm90aGVyIik7&parser=cjs-module-lexer-rs)
+
 ## Installation
 
 ### WebAssembly JS Wrapper
