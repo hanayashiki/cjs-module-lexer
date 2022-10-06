@@ -12,3 +12,4 @@ crate-type = ["cdylib"]
 cjs_module_lexer = { path = "../cjs_module_lexer" }
 wasm-bindgen = { version = "0.2.74" }
 serde-wasm-bindgen = "0.4"
+wee_alloc = "0.4.5"
