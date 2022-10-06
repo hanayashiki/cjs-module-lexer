@@ -9,7 +9,7 @@ pub fn is_punctuator(c: u8) -> bool {
 }
 
 pub fn is_br_or_ws_or_puntuator_not_dot(c: u8) -> bool {
-    return c > 8 && c < 14 || c == 32 || c == 160 || is_punctuator(c) && c != b'.';
+    return c == 32 || c > 8 && c < 14 || c == 160 || is_punctuator(c) && c != b'.';
 }
 
 pub fn is_br(c: u8) -> bool {
@@ -88,8 +88,8 @@ pub enum MaybeKeyword {
 impl MaybeKeyword {
     pub fn is_some(&self) -> bool {
         match self {
-            Self::Expression(s) => *s > 0, 
-            Self::Parenthesis(s) => *s > 0, 
+            Self::Expression(s) => *s > 0,
+            Self::Parenthesis(s) => *s > 0,
             Self::None => false,
         }
     }
@@ -127,22 +127,24 @@ pub fn match_keyword(source: &[u8]) -> MaybeKeyword {
             },
             b'e' => MaybeKeyword::Expression(start_with_and_end(1, b"les")), // else
             b'i' => match source.get(1) {
-                Some(b'n') => MaybeKeyword::Expression(start_with_and_end(2, b"") + start_with_and_end(2, b"stanceof")), // in, instanceof
-                Some(b'f') => MaybeKeyword::Parenthesis(start_with_and_end(2, b"")),                                      // if
+                Some(b'n') => MaybeKeyword::Expression(
+                    start_with_and_end(2, b"") + start_with_and_end(2, b"stanceof"),
+                ), // in, instanceof
+                Some(b'f') => MaybeKeyword::Parenthesis(start_with_and_end(2, b"")), // if
                 _ => MaybeKeyword::None,
             },
-            b'n' => MaybeKeyword::Expression(start_with_and_end(1, b"ew")),    // new
+            b'n' => MaybeKeyword::Expression(start_with_and_end(1, b"ew")), // new
             b'r' => MaybeKeyword::Expression(start_with_and_end(1, b"eturn")), // return
             b't' => match source.get(1) {
-                Some(b'h') => MaybeKeyword::Expression(start_with_and_end(2, b"row")),  // throw
+                Some(b'h') => MaybeKeyword::Expression(start_with_and_end(2, b"row")), // throw
                 Some(b'y') => MaybeKeyword::Expression(start_with_and_end(2, b"peof")), // typeof
                 _ => MaybeKeyword::None,
             },
-            b'v' => MaybeKeyword::Expression(start_with_and_end(1, b"oid")),  // void
+            b'v' => MaybeKeyword::Expression(start_with_and_end(1, b"oid")), // void
             b'y' => MaybeKeyword::Expression(start_with_and_end(1, b"ield")), // yield
             b'a' => MaybeKeyword::Expression(start_with_and_end(1, b"wait")), // await
             b'w' => MaybeKeyword::Parenthesis(start_with_and_end(1, b"hile")), // while
-            b'f' => MaybeKeyword::Parenthesis(start_with_and_end(1, b"or")),   // for
+            b'f' => MaybeKeyword::Parenthesis(start_with_and_end(1, b"or")), // for
             _ => MaybeKeyword::None,
         };
     }

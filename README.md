@@ -25,3 +25,21 @@ The frontend tooling has migrated to usage of moderm native languages to acceler
 ## Reference
 
 https://babeljs.io/docs/en/babel-plugin-transform-modules-commonjs
+
+
+## Benchmarks
+
+### Native 
+
+```
+cargo bench
+
+test tests::bench_angular          ... bench:   6,081,228 ns/iter (+/- 2,231,541)
+test tests::bench_angular_min      ... bench:   2,233,770 ns/iter (+/- 275,218)
+test tests::bench_d3               ... bench:   3,018,748 ns/iter (+/- 148,829)
+test tests::bench_d3_min           ... bench:   1,765,260 ns/iter (+/- 116,394)
+test tests::bench_magic_string     ... bench:     206,413 ns/iter (+/- 16,731)
+test tests::bench_magic_string_min ... bench:     142,617 ns/iter (+/- 8,605)
+test tests::bench_rollup           ... bench:   3,865,267 ns/iter (+/- 234,927)
+test tests::bench_rollup_min       ... bench:   2,608,537 ns/iter (+/- 135,582)
+```

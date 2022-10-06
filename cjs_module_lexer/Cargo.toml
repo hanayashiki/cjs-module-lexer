@@ -1,0 +1,8 @@
+[package]
+name = "cjs_module_lexer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+unicode-id-start = "1.0.3"
+serde = { version = "1.0", features = ["derive"] }

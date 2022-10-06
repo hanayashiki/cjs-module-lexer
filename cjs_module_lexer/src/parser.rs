@@ -1,6 +1,6 @@
 use crate::utils::*;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ParseResult {
     pub imports: Vec<String>,
     pub exports: Vec<String>,
@@ -8,13 +8,13 @@ pub struct ParseResult {
     pub errors: Vec<ParseError>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ParseErrorMessage {
     pub pos: usize,
     pub message: String,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum ParseError {
     UnexpectedEOF(ParseErrorMessage),
     UnexpectedEscapeCharacter(char, ParseErrorMessage),
@@ -328,24 +328,33 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn string_literal(&mut self) -> Option<String> {
+    fn string_literal(&mut self, skip: bool) -> Option<String> {
         // lexer.c stringLiteral
         match self.cur() {
             Some(quote @ (b'\'' | b'"')) => {
                 self.next();
 
-                let mut result: Vec<u8> = vec![];
+                let mut result: Option<Vec<u8>> = None;
+
+                if !skip {
+                    result = Some(Vec::<u8>::with_capacity(1024));
+                }
 
                 while let Some(c) = self.cur() {
                     match c {
                         c if c == quote => {
                             self.next();
                             self.expect_expression = false;
-                            return Some(String::from_utf8(result).unwrap());
+                            if skip {
+                                return None;
+                            }
+                            return Some(String::from_utf8(result.unwrap()).unwrap());
                         }
                         b'\\' => {
                             if let Some(escaped) = self.string_escape_sequence() {
-                                result.extend(escaped.iter());
+                                if !skip {
+                                    result.as_mut().unwrap().extend(escaped.iter());
+                                }
                             } else {
                                 return None;
                             }
@@ -354,7 +363,9 @@ impl<'a> Parser<'a> {
                         c if is_br(c) => break,
                         _ => {
                             self.next();
-                            result.push(c);
+                            if !skip {
+                                result.as_mut().unwrap().push(c);
+                            }
                         }
                     }
                 }
@@ -407,7 +418,7 @@ impl<'a> Parser<'a> {
                     self.comment_whitespace();
 
                     if let Some(_) = self.identifer() {
-                    } else if let Some(_) = self.string_literal() {
+                    } else if let Some(_) = self.string_literal(true) {
                     } else if let Some(_) = self.number_literal() {
                     } else {
                         // TODO: report error
@@ -460,7 +471,7 @@ impl<'a> Parser<'a> {
                 self.next();
                 self.comment_whitespace();
 
-                if let Some(key) = self.string_literal() {
+                if let Some(key) = self.string_literal(false) {
                     self.comment_whitespace();
 
                     if let Some(b']') = self.cur() {
@@ -527,7 +538,7 @@ impl<'a> Parser<'a> {
 
                 self.comment_whitespace();
 
-                let required = self.string_literal()?;
+                let required = self.string_literal(false)?;
                 self.parse_result.imports.push(required.clone());
 
                 self.comment_whitespace();
@@ -561,8 +572,8 @@ impl<'a> Parser<'a> {
     ///     3. if (...)
     ///
     fn regex_literal(&mut self) {
-        println!("Regex identified");
-        self.print_current_line();
+        // println!("Regex identified");
+        // self.print_current_line();
         if let Some(b'/') = self.cur() {
             let start_pos = self.pos;
 
@@ -582,7 +593,6 @@ impl<'a> Parser<'a> {
                                 "The regular expression ends halfway with a line break."
                             ),
                         }));
-                    panic!("!!!");
                     return;
                 }
 
@@ -603,8 +613,8 @@ impl<'a> Parser<'a> {
             // optional RegularExpressionFlags
             self.identifer();
 
-            println!("Regex end");
-            self.print_current_line();
+            // println!("Regex end");
+            // self.print_current_line();
         } else {
             return;
         }
@@ -691,14 +701,17 @@ impl<'a> Parser<'a> {
                 b'r' if self.source[self.pos..].starts_with(REQUIRE) && self.keyword_start() => {
                     self.try_parse_require();
                 }
-                b'i' | b'w' | b'f' | b'c' | b'd' | b'e' | b'n' | b'r' | b't' | b'v' | b'y' | b'a' if self.keyword_start() => {
-                    let maybe_keyword = match_keyword(&self.source[self.pos..]); 
+                b'i' | b'w' | b'f' | b'c' | b'd' | b'e' | b'n' | b'r' | b't' | b'v' | b'y'
+                | b'a'
+                    if self.keyword_start() =>
+                {
+                    let maybe_keyword = match_keyword(&self.source[self.pos..]);
 
                     if maybe_keyword.is_some() {
                         if let MaybeKeyword::Expression(s) = maybe_keyword {
                             self.next_offset(s);
                             self.expect_expression = true;
-                        } 
+                        }
                         if let MaybeKeyword::Parenthesis(s) = maybe_keyword {
                             self.next_offset(s);
                             self.expect_expression = false;
@@ -710,7 +723,7 @@ impl<'a> Parser<'a> {
                     }
                 }
                 b'\'' | b'"' => {
-                    self.string_literal();
+                    self.string_literal(true);
                 }
                 b'`' => self.template_literal(false),
                 b'm' if self.source[self.pos..].starts_with(MODULE) && self.keyword_start() => {

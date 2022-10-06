@@ -18,16 +18,16 @@ mod tests {
         b.iter(|| {
             let mut p = Parser::new(source.as_str(), path);
             p.parse();
-            println!("{} {:?}", path, p.parse_result.errors);
-            assert_eq!(
-                p.parse_result
-                    .errors
-                    .iter()
-                    .filter(|p| !matches!(p, ParseError::UnexpectedEscapeCharacter('0', _)))
-                    .collect::<Vec<_>>()
-                    .len(),
-                0
-            );
+            // println!("{} {:?}", path, p.parse_result.errors);
+            // assert_eq!(
+            //     p.parse_result
+            //         .errors
+            //         .iter()
+            //         .filter(|p| !matches!(p, ParseError::UnexpectedEscapeCharacter('0', _)))
+            //         .collect::<Vec<_>>()
+            //         .len(),
+            //     0
+            // );
         });
     }
 
