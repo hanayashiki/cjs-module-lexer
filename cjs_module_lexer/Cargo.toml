@@ -6,3 +6,7 @@ edition = "2021"
 [dependencies]
 unicode-id-start = "1.0.3"
 serde = { version = "1.0", features = ["derive"] }
+
+[profile.release]
+debug = true
+lto = true
