@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "cjs-module-lexer-rs": "^0.2.4"
+  }
+}
