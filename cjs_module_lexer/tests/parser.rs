@@ -191,7 +191,23 @@ mod tests {
         let mut p = Parser::new(source, "@");
         let r = p.parse();
 
-        assert_eq!(r.imports, vec![String::from("react"),])
+        assert_eq!(r.imports, vec![String::from("react"),]);
+
+        let source = r#"
+            module.exports.asdf = 'asdf';
+            exports = 'asdf';
+            module.exports = require('./asdf');
+            if (maybe)
+            module.exports = require("./another");
+        "#;
+
+        let mut p = Parser::new(source, "@");
+        let r = p.parse();
+
+        assert_eq!(
+            r.imports,
+            vec![String::from("./asdf"), String::from("./another")]
+        );
     }
 
     #[test]

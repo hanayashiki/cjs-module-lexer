@@ -207,7 +207,6 @@ impl<'a> Parser<'a> {
 
             return Some(result);
         } else {
-            println!("hex digits none");
             None
         }
     }
@@ -323,7 +322,6 @@ impl<'a> Parser<'a> {
                 _ => None,
             }
         } else {
-            println!("None!!");
             return None;
         }
     }
@@ -346,7 +344,7 @@ impl<'a> Parser<'a> {
                             self.next();
                             self.expect_expression = false;
                             if skip {
-                                return None;
+                                return Some(String::from(""));
                             }
                             return Some(String::from_utf8(result.unwrap()).unwrap());
                         }
@@ -502,6 +500,7 @@ impl<'a> Parser<'a> {
                 if self.cur() == Some(b'r') {
                     if let Some(module) = self.try_parse_require() {
                         self.parse_result.reexports = vec![module];
+                        return;
                     }
                 }
             }
@@ -572,8 +571,6 @@ impl<'a> Parser<'a> {
     ///     3. if (...)
     ///
     fn regex_literal(&mut self) {
-        // println!("Regex identified");
-        // self.print_current_line();
         if let Some(b'/') = self.cur() {
             let start_pos = self.pos;
 
@@ -612,9 +609,6 @@ impl<'a> Parser<'a> {
 
             // optional RegularExpressionFlags
             self.identifer();
-
-            // println!("Regex end");
-            // self.print_current_line();
         } else {
             return;
         }
@@ -714,6 +708,7 @@ impl<'a> Parser<'a> {
                         }
                         if let MaybeKeyword::Parenthesis(s) = maybe_keyword {
                             self.next_offset(s);
+                            self.parenthesis_type = ParenthesisType::ParenthesisKeyword;
                             self.expect_expression = false;
                         }
                     } else {
@@ -759,7 +754,6 @@ impl<'a> Parser<'a> {
                     self.next();
                 }
                 b')' | b']' | b'}' => {
-                    // println!("pop_bracket_stack");
                     let bracket = self.pop_bracket_stack();
 
                     if let Some(Bracket::TemplateBrace) = bracket {
@@ -811,7 +805,6 @@ impl<'a> Parser<'a> {
             self.next();
             if let Some(old) = self.bracket_stack.pop() {
                 if ch != get_bracket_close_code(&old) {
-                    println!("IncorrectClosingBracket");
                     self.parse_result
                         .errors
                         .push(ParseError::IncorrectClosingBracket(
@@ -833,7 +826,6 @@ impl<'a> Parser<'a> {
                     Bracket::Parenthesis(ParenthesisType::ParenthesisKeyword)
                 ) {
                     // End of place like: if (...)
-                    // println!("ParenthesisKeyword close");
                     self.expect_expression = true;
                 } else {
                     // End of place like: (a + b), { a: 1 }, [1, 2, 3]
@@ -842,7 +834,6 @@ impl<'a> Parser<'a> {
 
                 return Some(old);
             } else {
-                println!("UnexpectedBracket");
                 self.parse_result.errors.push(ParseError::UnexpectedBracket(
                     char::from(ch),
                     ParseErrorMessage {

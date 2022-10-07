@@ -1,7 +1,7 @@
 {
   "name": "cjs-module-lexer-rs",
   "license": "MIT",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "exports": {
@@ -20,7 +20,8 @@
   "scripts": {
     "build:wasm": "wasm-pack build --target web --out-dir dist-wasm",
     "build:js": "node scripts/build.js",
-    "build": "cp ../README.md . && yarn build:wasm && yarn build:js && tsc"
+    "build": "cp ../README.md . && yarn build:wasm && yarn build:js && tsc",
+    "prepare": "cd ../cjs_module_lexer && cargo test && cargo bench && cd - && yarn build"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.5.0",

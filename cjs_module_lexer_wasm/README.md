@@ -57,7 +57,7 @@ init().then(() => console.log(parse(code, 'filename.js')));
 
 ```js
 {
-  imports: [ './asdf', './asdf', './another', './another' ],
+  imports: [ './asdf', './another'],
   exports: [ 'asdf' ],
   reexports: [ './another' ],
   errors: []
@@ -96,9 +96,7 @@ init().then(() => console.log(parse(code, 'filename.js')));
 {
     "imports": [
         "./asdf",
-        "./asdf",
         "./another",
-        "./another"
     ],
     "exports": [
         "asdf"
