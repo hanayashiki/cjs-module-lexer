@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexer Example</title>
+  </head>
+  <body>
+	<script type="module">
+        import { init, parse } from "https://esm.sh/cjs-module-lexer-rs";
+
+        const code = `
+            module.exports.asdf = 'asdf';
+            exports = 'asdf';
+            module.exports = require('./asdf');
+            if (maybe)
+            module.exports = require("./another");
+        `;
+
+        init().then(() => console.log(parse(code, 'filename.js')));
+
+    </script>
+  </body>
+</html>

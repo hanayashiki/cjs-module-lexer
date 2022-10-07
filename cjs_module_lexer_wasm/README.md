@@ -1,11 +1,18 @@
+[![npm](https://img.shields.io/npm/v/cjs-module-lexer-rs)](https://www.npmjs.com/package/cjs-module-lexer-rs) ![NPM](https://img.shields.io/npm/l/cjs-module-lexer-rs) 
+
 # CJS Module Lexer (Rust)
 
 This is a rewrite of [cjs-module-lexer](https://github.com/nodejs/cjs-module-lexer) in Rust. It is a CommonJS lexer used to detect the most likely list of named exports of a CommonJS module.
 
+## Online Playground
+
+[CJS Module Lexer Playground](https://cjs-module-lexer-playground.vercel.app?code=bW9kdWxlLmV4cG9ydHMuYXNkZiA9ICdhc2RmJzsKZXhwb3J0cyA9ICdhc2RmJzsKbW9kdWxlLmV4cG9ydHMgPSByZXF1aXJlKCcuL2FzZGYnKTsKaWYgKG1heWJlKQogIG1vZHVsZS5leHBvcnRzID0gcmVxdWlyZSgiLi9hbm90aGVyIik7&parser=cjs-module-lexer-rs)
 
 ## Installation
 
 ### WebAssembly JS Wrapper
+
+#### With Package Managers
 
 ```
 npm i cjs-module-lexer-rs
@@ -19,9 +26,89 @@ yarn add cjs-module-lexer-rs
 pnpm add cjs-module-lexer-rs
 ```
 
+#### With esm.sh
+
+```js
+import { init, parse } from "https://esm.sh/cjs-module-lexer-rs";
+```
+
 ### Rust
 
 **Coming soon...**
+
+## Get Started
+
+### Node
+
+```js
+// example.js
+const { init, parse } = require("cjs-module-lexer-rs");
+
+const code = `
+    module.exports.asdf = 'asdf';
+    exports = 'asdf';
+    module.exports = require('./asdf');
+    if (maybe)
+    module.exports = require("./another");
+`;
+
+init().then(() => console.log(parse(code, 'filename.js')));
+```
+
+```js
+{
+  imports: [ './asdf', './asdf', './another', './another' ],
+  exports: [ 'asdf' ],
+  reexports: [ './another' ],
+  errors: []
+}
+```
+
+### Web
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lexer Example</title>
+    </head>
+    <body>
+        <script type="module">
+            import { init, parse } from "https://esm.sh/cjs-module-lexer-rs";
+
+            const code = `
+                module.exports.asdf = 'asdf';
+                exports = 'asdf';
+                module.exports = require('./asdf');
+                if (maybe)
+                module.exports = require("./another");
+            `;
+
+            init().then(() => console.log(parse(code, 'filename.js')));
+        </script>
+    </body>
+</html>
+```
+
+```json
+{
+    "imports": [
+        "./asdf",
+        "./asdf",
+        "./another",
+        "./another"
+    ],
+    "exports": [
+        "asdf"
+    ],
+    "reexports": [
+        "./another"
+    ],
+    "errors": []
+}
+```
 
 
 ## The Why

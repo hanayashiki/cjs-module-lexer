@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "cjs_module_lexer_wasm"
-version = "0.2.2"
+version = "0.2.5"
 dependencies = [
  "cjs_module_lexer",
  "serde-wasm-bindgen",
