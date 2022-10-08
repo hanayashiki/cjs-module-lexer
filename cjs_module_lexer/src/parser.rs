@@ -104,7 +104,7 @@ impl<'a> Parser<'a> {
     fn block_comment(&mut self) {
         // handle `/*...*/`
         self.next_offset(2);
-        while let Some(_) = self.cur() {
+        while let Some(c) = self.cur() {
             if self.cur_offset(0) == Some(b'*') && self.cur_offset(1) == Some(b'/') {
                 self.next_offset(2);
                 return;

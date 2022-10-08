@@ -5,3 +5,7 @@ members = [
     "cjs_module_lexer",
     "cjs_module_lexer_wasm"
 ]
+
+[profile.release]
+debug = true
+lto = true

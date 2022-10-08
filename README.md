@@ -139,12 +139,12 @@ https://babeljs.io/docs/en/babel-plugin-transform-modules-commonjs
 ```
 cargo bench
 
-test tests::bench_angular          ... bench:   5,176,437 ns/iter (+/- 260,598)
-test tests::bench_angular_min      ... bench:   2,321,468 ns/iter (+/- 939,693)
-test tests::bench_d3               ... bench:   3,155,154 ns/iter (+/- 182,490)
-test tests::bench_d3_min           ... bench:   1,897,146 ns/iter (+/- 100,576)
-test tests::bench_magic_string     ... bench:     209,630 ns/iter (+/- 11,577)
-test tests::bench_magic_string_min ... bench:     145,834 ns/iter (+/- 7,527)
-test tests::bench_rollup           ... bench:   3,918,989 ns/iter (+/- 130,726)
-test tests::bench_rollup_min       ... bench:   2,637,478 ns/iter (+/- 74,449)
+test tests::bench_angular          ... bench:   5,062,561 ns/iter (+/- 274,023)
+test tests::bench_angular_min      ... bench:   2,123,690 ns/iter (+/- 110,055)
+test tests::bench_d3               ... bench:   3,066,050 ns/iter (+/- 1,230,751)
+test tests::bench_d3_min           ... bench:   1,786,949 ns/iter (+/- 686,781)
+test tests::bench_magic_string     ... bench:     203,876 ns/iter (+/- 28,393)
+test tests::bench_magic_string_min ... bench:     134,005 ns/iter (+/- 9,085)
+test tests::bench_rollup           ... bench:   3,754,485 ns/iter (+/- 196,298)
+test tests::bench_rollup_min       ... bench:   2,581,948 ns/iter (+/- 144,913)
 ```
